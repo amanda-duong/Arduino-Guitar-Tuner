@@ -1,16 +1,28 @@
-
+// Assign pins for input (micrphone) and output (LEDs)
 const int mic = A0;
 const int leftRedLED = 5;
 const int greenLED = 4;
 const int rightRedLED = 3;
-const int MIC_OFFSET = 335;
-const int VOL_THRESHOLD = 30;
+
+// Initializing microphone calibration parameters
+// MIC_OFFSET: Center / Baseline of signal oscillation
+// VOL_THRESHOLD: Baseline volume to begin analyzing frequency
+const int MIC_OFFSET = 335; 
+const int VOL_THRESHOLD = 30;  
+
+// Initializing timing parameters
+// IDLE_TIME: Time (ms) before LEDs turn off due to no note detected
+// PLUCK_DELAY: Short delay (ms) after pluck for vibrations to normalize before signal is analyzed
 const int IDLE_TIME = 3000;
-const double TOLERANCE = 3;
 const int PLUCK_DELAY = 550;
+
+// Margin of error allowed for a string to be deemed "in tune"
+const double TOLERANCE = 3;
 
 #include <arduinoFFT.h>
 
+// Initializing expected frequencies and names for "in tune" guitar strings
+// *currently designed only for standard tuning (EADGBE)
 const double notes[6] =
 {
   78.12,
@@ -32,19 +44,25 @@ const char* names[6] =
 };
 
 
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
+
+  // Establish LED pins as outputs
   pinMode(leftRedLED, OUTPUT);
   pinMode(greenLED, OUTPUT);
   pinMode(rightRedLED, OUTPUT);
 }
 
+// Initializing FFT parameters
+// Larger number of samples improves accuracy, but takes longer to record and process
 const uint16_t samples = 512;
 const double samplingFrequency = 2000;
 
 double vReal[samples];
 double vImag[samples];
 
+// Initialize FFT object for conversion of raw data to frequency information
 ArduinoFFT<double> FFT(vReal, vImag, samples, samplingFrequency);
 
 int previous = 0;
@@ -119,6 +137,7 @@ void loop()
 
   double freq = lowestFreq;
 
+  // Determine plucked guitar string based on closest standard frequency
   double smallestDifference = 100000;
   int closest = -1;
 
@@ -133,31 +152,41 @@ void loop()
       }
   }
 
+
+    // Block unrealistic/invalid frequency recordings
     if (freq > 3000 || freq < 20) 
     {
-        freq = 0; // no valid signal detected
+        freq = 0;
     }
 
+    // Calculate error of recorded frequency compared to ideal frequency of a note
     double error = freq - notes[closest];
     if(error < -TOLERANCE)
     {
+        // Frequency is lower than ideal (flat)
+        // Left red LED is activated
         digitalWrite(leftRedLED, HIGH);
         digitalWrite(greenLED, LOW);
         digitalWrite(rightRedLED, LOW);
     }
     else if(error > TOLERANCE)
     {
+        // Frequency is higher than ideal (sharp)
+        // Right red LED is activated
         digitalWrite(leftRedLED, LOW);
         digitalWrite(greenLED, LOW);
         digitalWrite(rightRedLED, HIGH);
     }
     else
     {
+        // Frequency is within tolerance of ideal value (in tune)
+        // Green LED is activated
         digitalWrite(leftRedLED, LOW);
         digitalWrite(greenLED, HIGH);
         digitalWrite(rightRedLED, LOW);
     }
 
+    // Outputs detected frequency and identified string (based on recorded vs nominal frequency values)
     Serial.print("Detected Frequency: ");
     Serial.println(freq);
     Serial.print("Closest String: ");
