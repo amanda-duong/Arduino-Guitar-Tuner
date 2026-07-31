@@ -2,6 +2,11 @@
 Arduino-based guitar tuner developed with C++ to perform real-time pitch detection using FFT-based signal processing. A GY-MAX4466 microphone is incorporated in the circuit to sense, amplify, and process audio input. 
 Targeted topics/skills: embedded systems, circuit design, signal processing in a language other than Java
 
+## Project Photos
+
+![Completed guitar tuner circuit](Images/tuner_circuit.jpg)
+![Circuit diagram](Images/tuner_diagram.jpg)
+
 ## Hardware Materials
 - 1 ELEGOO MEGA R3 Board ATmega 2560
 - 1 Small breadboard
